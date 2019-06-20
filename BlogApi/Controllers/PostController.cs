@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using BlogApi.DTO;
 using BlogApi.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlogApi.Controllers
@@ -17,17 +18,20 @@ namespace BlogApi.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         [Route("api/Posts")]
         public async Task<ActionResult<IEnumerable<Post>>> All()
             => Ok(await dbService.Posts());
 
         [HttpGet]
+        [AllowAnonymous]
         [Route("api/Posts/{id}")]
         public async Task<ActionResult<Post>> ById([FromRoute] int id)
             => Ok(await dbService.PostById(id));
 
 
         [HttpDelete]
+        [Authorize]
         [Route("api/Posts/{id}")]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
@@ -36,11 +40,13 @@ namespace BlogApi.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         [Route("api/Posts")]
         public async Task<ActionResult<Post>> Create([FromBody] Post post)
             => Ok(await dbService.CreatePost(post));
 
         [HttpPut]
+        [Authorize]
         [Route("api/Posts")]
         public async Task<ActionResult<Post>> Edit([FromBody] Post post)
             => Ok(await dbService.EditPost(post));
