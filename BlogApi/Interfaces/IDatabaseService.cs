@@ -8,8 +8,8 @@ namespace BlogApi.Interfaces
     {
         Task<IEnumerable<Post>> Posts();
         Task<Post> PostById(int id);
-        Task CreatePost(Post post);
-        Task EditPost(Post post);
+        Task<Post> CreatePost(Post post);
+        Task<Post> EditPost(Post post);
         Task DeletePost(int id);
     }
 }

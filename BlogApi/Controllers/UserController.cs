@@ -5,7 +5,7 @@ namespace BlogApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController : ControllerBase
+    public class UserController : ControllerBase
     {
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()

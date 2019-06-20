@@ -23,7 +23,7 @@ namespace BlogApi.Services
             this.storageService = storageService;
         }
 
-        public async Task CreatePost(Post post)
+        public async Task<Post> CreatePost(Post post)
         {
             ValidatePost(post);
 
@@ -37,6 +37,8 @@ namespace BlogApi.Services
                     Body = post.Body
                 });
             }
+
+            return post;
         }
 
         public async Task DeletePost(int id)
@@ -54,7 +56,7 @@ namespace BlogApi.Services
             }
         }
 
-        public async Task EditPost(Post post)
+        public async Task<Post> EditPost(Post post)
         {
             ValidatePost(post);
             ValidateId(post.Id);
@@ -69,6 +71,8 @@ namespace BlogApi.Services
                     Body = post.Body
                 });
             }
+
+            return post;
         }
 
         public async Task<Post> PostById(int id)
