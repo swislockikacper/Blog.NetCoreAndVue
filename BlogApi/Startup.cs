@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using BlogApi.Interfaces;
+using BlogApi.Services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +20,8 @@ namespace BlogApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddScoped<IStorageService, StorageService>();
+            services.AddScoped<IDatabaseService, DatabaseService>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
