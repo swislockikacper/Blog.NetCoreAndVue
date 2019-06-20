@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BlogApi.Constants;
 using BlogApi.DTO;
+using BlogApi.DTOs;
 using BlogApi.Extensions;
 using BlogApi.Interfaces;
 using Dapper;
@@ -86,6 +87,7 @@ namespace BlogApi.Services
                 var post = await dbConnection.QueryAsync<Post>(query);
 
                 return post.FirstOrDefault();
+                //todo deserialize post body
             }
         }
 
@@ -98,6 +100,7 @@ namespace BlogApi.Services
                 var posts = await dbConnection.QueryAsync<Post>(query);
 
                 return posts.ToList();
+                //todo deserialize posts body
             }
         }
 
@@ -111,6 +114,12 @@ namespace BlogApi.Services
         {
             if(!id.IsCorrectId())
                 throw new ArgumentException("Id must be bigger than 0.");
+        }
+
+        private IEnumerable<PostBodyElement> DeserializePostBody()
+        {
+            //todo
+            return null;
         }
     }
 }
