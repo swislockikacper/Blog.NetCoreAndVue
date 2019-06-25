@@ -42,6 +42,7 @@ namespace BlogApi
             services.AddScoped<IStorageService, StorageService>();
             services.AddScoped<IDatabaseService, DatabaseService>();
             services.AddTransient<IAuthorizationService, AuthorizationService>();
+            services.AddTransient<IValidationService, ValidationService>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

@@ -5,6 +5,6 @@
         Text = 1,
         Code,
         Photo,
-        Quotation
+        Json
     }
 }

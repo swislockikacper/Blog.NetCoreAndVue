@@ -1,4 +1,4 @@
-﻿using BlogApi.DTO;
+﻿using BlogApi.DTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

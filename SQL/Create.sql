@@ -17,7 +17,8 @@ CREATE TABLE [dbo].[Post]
 (
     [Id] INT IDENTITY PRIMARY KEY NOT NULL,
     [Title] NVARCHAR(MAX) NOT NULL,
-    [UserId] NVARCHAR(100) NOT NULL
+    [UserId] NVARCHAR(100) NOT NULL,
+    [Created] BIGINT NOT NULL
 )
 GO
 

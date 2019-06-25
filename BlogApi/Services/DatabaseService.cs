@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using BlogApi.Constants;
-using BlogApi.DTO;
 using BlogApi.DTOs;
 using BlogApi.Extensions;
 using BlogApi.Interfaces;
@@ -17,34 +16,55 @@ namespace BlogApi.Services
     {
         private readonly IConfiguration configuration;
         private readonly IStorageService storageService;
+        private readonly IValidationService validationService;
 
-        public DatabaseService(IConfiguration configuration, IStorageService storageService)
+        public DatabaseService(IConfiguration configuration, IStorageService storageService, IValidationService validationService)
         {
             this.configuration = configuration;
             this.storageService = storageService;
+            this.validationService = validationService;
         }
 
+        //todo optimalization and delete sql injection
         public async Task<Post> CreatePost(Post post)
         {
-            ValidatePost(post);
+            validationService.ValidatePostContentIsNotEmpty(post);
 
             using(var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
             {
-                var insert = $"INSERT INTO {Database.Post} ([Title], [Body]) VALUES (@Title, @Body)";
+                var insert = $"INSERT INTO {Database.Post} ([Title], [UserId], [Created]) VALUES (@Title, @UserId, @Created)";
 
                 await dbConnection.ExecuteAsync(insert, new
                 {
                     Title = post.Title,
-                    Body = post.Body
+                    UserId = post.UserId,
+                    Created = DateTime.UtcNow.ToTimestamp()
                 });
+
+                var query = $"SELECT TOP(1) [Id] FROM {Database.Post} ORDER BY [Id] DESC";
+                var postId = await dbConnection.QueryAsync<int>(query);
+
+                insert = $"INSERT INTO {Database.PostElement} ([Type], [Number], [Content], [PostId]) VALUES (@Type, @Number, @Content, @PostId)";
+
+                foreach (var item in post.Elements)
+                {
+                    await dbConnection.ExecuteAsync(insert, new
+                    {
+                        Type = item.Type,
+                        Number = item.Number,
+                        Content = item.Content,
+                        PostId = postId
+                    });
+                }
             }
 
             return post;
         }
 
+        //todo optimalization and delete sql injection
         public async Task DeletePost(int id)
         {
-            ValidateId(id);
+            validationService.ValidateIdIsCorrect(id);
 
             using (var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
             {
@@ -54,43 +74,68 @@ namespace BlogApi.Services
                 {
                     Id = id
                 });
+
+                delete = $"DELETE FROM {Database.PostElement} WHERE [PostId] = @Id";
+
+                await dbConnection.ExecuteAsync(delete, new
+                {
+                    Id = id
+                });
             }
         }
 
+        //todo optimalization and delete sql injection
         public async Task<Post> EditPost(Post post)
         {
-            ValidatePost(post);
-            ValidateId(post.Id);
+            validationService.ValidatePostContentIsNotEmpty(post);
+            validationService.ValidateIdIsCorrect(post.Id);
 
             using (var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
             {
-                var set = $"UPDATE {Database.Post} SET [Title] = @Title, [Body] = @Body WHERE [Id] = {post.Id}";
+                var set = $"UPDATE {Database.Post} SET [Title] = @Title WHERE [Id] = {post.Id}";
 
                 await dbConnection.ExecuteAsync(set, new
                 {
-                    Title = post.Title,
-                    Body = post.Body
+                    Title = post.Title
                 });
+
+                foreach (var item in post.Elements)
+                {
+                    set = $"UPDATE {Database.PostElement} SET [Type] = @Type, [Number] = @Number, [Content] = @Content  WHERE [Id] = {item.Id}";
+
+                    await dbConnection.ExecuteAsync(set, new
+                    {
+                        Type = item.Type,
+                        Number = item.Number,
+                        Content = item.Content
+                    });
+                }
             }
 
             return post;
         }
 
+        //todo optimalization
         public async Task<Post> PostById(int id)
         {
-            ValidateId(id);
+            validationService.ValidateIdIsCorrect(id);
 
             using (var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
             {
                 var query = $"SELECT * FROM {Database.Post} WHERE [Id] = {id}";
 
-                var post = await dbConnection.QueryAsync<Post>(query);
+                var postQuery = await dbConnection.QueryAsync<Post>(query);
+                var post = postQuery.FirstOrDefault();
 
-                return post.FirstOrDefault();
-                //todo deserialize post body
+                query = $"SELECT * FROM {Database.PostElement} WHERE [PostId] = {id}";
+
+                post.Elements = await dbConnection.QueryAsync<PostElement>(query);
+
+                return post;
             }
         }
 
+        //todo optimalization
         public async Task<IEnumerable<Post>> Posts()
         {
             using (var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
@@ -99,27 +144,15 @@ namespace BlogApi.Services
 
                 var posts = await dbConnection.QueryAsync<Post>(query);
 
-                return posts.ToList();
-                //todo deserialize posts body
+                foreach (var post in posts)
+                {
+                    query = $"SELECT * FROM {Database.PostElement} WHERE [PostId] = {post.Id}";
+
+                    post.Elements = await dbConnection.QueryAsync<PostElement>(query);
+                }
+
+                return posts;
             }
-        }
-
-        private void ValidatePost(Post post)
-        {
-            if (post.Title.IsNullOrEmpty() || post.Body.IsNullOrEmpty())
-                throw new ArgumentException("Values of post cannot be empty.");
-        }
-
-        private void ValidateId(int id)
-        {
-            if(!id.IsCorrectId())
-                throw new ArgumentException("Id must be bigger than 0.");
-        }
-
-        private IEnumerable<PostBodyElement> DeserializePostBody()
-        {
-            //todo
-            return null;
         }
     }
 }

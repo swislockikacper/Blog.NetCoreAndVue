@@ -2,7 +2,7 @@
 
 namespace BlogApi.DTOs
 {
-    public class PostBodyElement
+    public class PostElement
     {
         public short Number { get; set; }
         public PostItemType Type { get; set; }
