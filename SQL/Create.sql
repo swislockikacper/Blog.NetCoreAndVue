@@ -1,23 +1,48 @@
+ALTER TABLE [dbo].[PostElement] DROP CONSTRAINT IF EXISTS [FK_POST_POSTELEMENT]
+GO
+
+ALTER TABLE [dbo].[Post] DROP CONSTRAINT IF EXISTS [FK_POST_USER]
+GO
+
+DROP TABLE IF EXISTS [dbo].[PostElement]
+GO
+
 DROP TABLE IF EXISTS [dbo].[Post]
-GO;
+GO
 
 DROP TABLE IF EXISTS [dbo].[User]
-GO;
+GO
 
 CREATE TABLE [dbo].[Post]
 (
     [Id] INT IDENTITY PRIMARY KEY NOT NULL,
-    [Title] NVARCHAR(1000) NOT NULL,
-    [Body] NVARCHAR(MAX) NOT NULL
+    [Title] NVARCHAR(MAX) NOT NULL,
+    [UserId] NVARCHAR(100) NOT NULL
 )
-GO;
+GO
+
+CREATE TABLE [dbo].[PostElement]
+(
+    [Id] INT IDENTITY PRIMARY KEY NOT NULL,
+    [Type] SMALLINT NOT NULL,
+    [Number] SMALLINT NOT NULL,
+    [Content] NVARCHAR(MAX) NOT NULL,
+    [PostId] INT NOT NULL 
+)
+GO
 
 CREATE TABLE [dbo].[User]
 (
-    [Id] nvarchar(100) NOT NULL PRIMARY KEY,
-    [EmailAddress] nvarchar(100) NOT NULL,
-    [Password] varbinary(MAX) NOT NULL,
-    [Salt] varbinary(MAX) NOT NULL,
-    [FullName] nvarchar(200)
+    [Id] NVARCHAR(100) NOT NULL PRIMARY KEY,
+    [EmailAddress] NVARCHAR(500) NOT NULL,
+    [Password] VARBINARY(MAX) NOT NULL,
+    [Salt] VARBINARY(MAX) NOT NULL,
+    [FullName] NVARCHAR(200)
 )
-GO;
+GO
+
+ALTER TABLE [dbo].[PostElement] ADD CONSTRAINT [FK_POST_POSTELEMENT] FOREIGN KEY ([PostId]) REFERENCES [dbo].[Post]([Id])
+GO
+
+ALTER TABLE [dbo].[Post] ADD CONSTRAINT [FK_POST_USER] FOREIGN KEY ([UserId]) REFERENCES [dbo].[User]([Id])
+GO
