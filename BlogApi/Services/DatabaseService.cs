@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
@@ -61,26 +62,13 @@ namespace BlogApi.Services
             return post;
         }
 
-        //todo optimalization and delete sql injection
         public async Task DeletePost(int id)
         {
             validationService.ValidateIdIsCorrect(id);
 
             using (var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
             {
-                var delete = $"DELETE FROM {Database.Post} WHERE [Id] = @Id";
-
-                await dbConnection.ExecuteAsync(delete, new
-                {
-                    Id = id
-                });
-
-                delete = $"DELETE FROM {Database.PostElement} WHERE [PostId] = @Id";
-
-                await dbConnection.ExecuteAsync(delete, new
-                {
-                    Id = id
-                });
+                await dbConnection.QueryAsync("[dbo].[DeletePost]", new { Id = id }, commandType: CommandType.StoredProcedure);
             }
         }
 

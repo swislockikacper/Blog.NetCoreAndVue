@@ -1,3 +1,6 @@
+DROP PROCEDURE IF EXISTS [dbo].[DeletePost]
+GO
+
 ALTER TABLE [dbo].[PostElement] DROP CONSTRAINT IF EXISTS [FK_POST_POSTELEMENT]
 GO
 
@@ -46,4 +49,12 @@ ALTER TABLE [dbo].[PostElement] ADD CONSTRAINT [FK_POST_POSTELEMENT] FOREIGN KEY
 GO
 
 ALTER TABLE [dbo].[Post] ADD CONSTRAINT [FK_POST_USER] FOREIGN KEY ([UserId]) REFERENCES [dbo].[User]([Id])
+GO
+
+CREATE PROCEDURE [dbo].[DeletePost] @Id AS INT
+AS
+    BEGIN
+        DELETE FROM [dbo].[Post] WHERE [Id] = @Id
+        DELETE FROM [dbo].[PostElement] WHERE [PostId] = @Id
+    END
 GO
