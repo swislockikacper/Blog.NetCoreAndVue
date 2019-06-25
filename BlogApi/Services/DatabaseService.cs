@@ -68,7 +68,11 @@ namespace BlogApi.Services
 
             using (var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
             {
-                await dbConnection.QueryAsync("[dbo].[DeletePost]", new { Id = id }, commandType: CommandType.StoredProcedure);
+                var parameters = new DynamicParameters();
+
+                parameters.Add("@Id", id);
+
+                await dbConnection.ExecuteAsync("[dbo].[DeletePost]", parameters, commandType: CommandType.StoredProcedure);
             }
         }
 
