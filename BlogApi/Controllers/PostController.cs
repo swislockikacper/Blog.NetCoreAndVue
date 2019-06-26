@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using BlogApi.DTO;
+using BlogApi.DTOs;
 using BlogApi.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +31,8 @@ namespace BlogApi.Controllers
 
 
         [HttpDelete]
-        [Authorize]
+        //[Authorize]
+        [AllowAnonymous]
         [Route("api/Posts/{id}")]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
@@ -40,13 +41,15 @@ namespace BlogApi.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        //[Authorize]
+        [AllowAnonymous]
         [Route("api/Posts")]
         public async Task<ActionResult<Post>> Create([FromBody] Post post)
             => Ok(await dbService.CreatePost(post));
 
         [HttpPut]
-        [Authorize]
+        //[Authorize]
+        [AllowAnonymous]
         [Route("api/Posts")]
         public async Task<ActionResult<Post>> Edit([FromBody] Post post)
             => Ok(await dbService.EditPost(post));

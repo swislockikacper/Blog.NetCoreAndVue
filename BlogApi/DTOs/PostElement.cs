@@ -8,6 +8,6 @@ namespace BlogApi.DTOs
         public int PostId { get; set; }
         public short Number { get; set; }
         public PostItemType Type { get; set; }
-        public short Content { get; set; }
+        public string Content { get; set; }
     }
 }

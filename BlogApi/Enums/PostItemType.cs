@@ -4,7 +4,6 @@
     {
         Text = 1,
         Code,
-        Photo,
-        Json
+        Photo
     }
 }

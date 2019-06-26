@@ -16,13 +16,13 @@ namespace BlogApi.Services
     public class DatabaseService : IDatabaseService
     {
         private readonly IConfiguration configuration;
-        private readonly IStorageService storageService;
+       // private readonly IStorageService storageService;
         private readonly IValidationService validationService;
 
-        public DatabaseService(IConfiguration configuration, IStorageService storageService, IValidationService validationService)
+        public DatabaseService(IConfiguration configuration,/* IStorageService storageService,*/ IValidationService validationService)
         {
             this.configuration = configuration;
-            this.storageService = storageService;
+            //this.storageService = storageService;
             this.validationService = validationService;
         }
 
@@ -47,14 +47,18 @@ namespace BlogApi.Services
 
                 insert = $"INSERT INTO {Database.PostElement} ([Type], [Number], [Content], [PostId]) VALUES (@Type, @Number, @Content, @PostId)";
 
+                post.Id = postId.FirstOrDefault();
+
                 foreach (var item in post.Elements)
                 {
+                    item.PostId = post.Id;
+
                     var postElementParameters = new DynamicParameters();
 
                     postElementParameters.Add("@Type", item.Type);
                     postElementParameters.Add("@Number", item.Number);
                     postElementParameters.Add("@Content", item.Content);
-                    postElementParameters.Add("@PostId", postId);
+                    postElementParameters.Add("@PostId", item.PostId);
 
                     await dbConnection.ExecuteAsync(insert, postElementParameters);
                 }
@@ -97,18 +101,20 @@ namespace BlogApi.Services
 
                 postElementsDeleteParameters.Add("@Id", post.Id);
 
-                update = $"DELETE FROM {Database.PostElement} [PostId] = @Id";
+                update = $"DELETE FROM {Database.PostElement} WHERE [PostId] = @Id";
 
                 await dbConnection.ExecuteAsync(update, postElementsDeleteParameters);
 
                 foreach (var item in post.Elements)
                 {
+                    item.PostId = post.Id;
+
                     var postElementParameters = new DynamicParameters();
 
                     postElementParameters.Add("@Type", item.Type);
                     postElementParameters.Add("@Number", item.Number);
                     postElementParameters.Add("@Content", item.Content);
-                    postElementParameters.Add("@PostId", post.Id);
+                    postElementParameters.Add("@PostId", item.PostId);
 
                     update = $"INSERT INTO {Database.PostElement} ([Type], [Number], [Content], [PostId]) VALUES (@Type, @Number, @Content, @PostId)";
 
@@ -131,7 +137,7 @@ namespace BlogApi.Services
 
                 var queries = $"SELECT * FROM {Database.Post} WHERE [Id] = @Id" +
                     $"; " +
-                    $"SELECT * FROM {Database.PostElement} WHERE ]PostId] = @Id";
+                    $"SELECT * FROM {Database.PostElement} WHERE [PostId] = @Id";
 
                 var results = await dbConnection.QueryMultipleAsync(queries, parameters);
 
@@ -152,8 +158,8 @@ namespace BlogApi.Services
 
                 var results = await dbConnection.QueryMultipleAsync(queries);
 
-                var posts = results.Read<Post>();
-                var postsElements = results.Read<PostElement>();
+                var posts = results.Read<Post>().ToList();
+                var postsElements = results.Read<PostElement>().ToList();
 
                 foreach (var post in posts)
                 {
