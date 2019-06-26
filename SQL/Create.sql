@@ -54,7 +54,7 @@ GO
 CREATE PROCEDURE [dbo].[DeletePost] @Id AS INT
 AS
     BEGIN
-        DELETE FROM [dbo].[Post] WHERE [Id] = @Id
         DELETE FROM [dbo].[PostElement] WHERE [PostId] = @Id
+        DELETE FROM [dbo].[Post] WHERE [Id] = @Id
     END
 GO

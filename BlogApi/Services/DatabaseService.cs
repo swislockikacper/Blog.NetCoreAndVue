@@ -107,40 +107,45 @@ namespace BlogApi.Services
             return post;
         }
 
-        //todo optimalization
         public async Task<Post> PostById(int id)
         {
             validationService.ValidateIdIsCorrect(id);
 
             using (var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
             {
-                var query = $"SELECT * FROM {Database.Post} WHERE [Id] = {id}";
+                var parameters = new DynamicParameters();
 
-                var postQuery = await dbConnection.QueryAsync<Post>(query);
-                var post = postQuery.FirstOrDefault();
+                parameters.Add("@Id", id);
 
-                query = $"SELECT * FROM {Database.PostElement} WHERE [PostId] = {id}";
+                var queries = $"SELECT * FROM {Database.Post} WHERE [Id] = @Id" +
+                    $"; " +
+                    $"SELECT * FROM {Database.PostElement} WHERE ]PostId] = @Id";
 
-                post.Elements = await dbConnection.QueryAsync<PostElement>(query);
+                var results = await dbConnection.QueryMultipleAsync(queries, parameters);
+
+                var post = results.Read<Post>().FirstOrDefault();
+                post.Elements = results.Read<PostElement>().ToList();
 
                 return post;
             }
         }
 
-        //todo optimalization
         public async Task<IEnumerable<Post>> Posts()
         {
             using (var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
             {
-                var query = $"SELECT * FROM {Database.Post}";
+                var queries = $"SELECT * FROM {Database.Post}" +
+                    $"; " +
+                    $"SELECT * FROM {Database.PostElement}";
 
-                var posts = await dbConnection.QueryAsync<Post>(query);
+                var results = await dbConnection.QueryMultipleAsync(queries);
+
+                var posts = results.Read<Post>();
+                var postsElements = results.Read<PostElement>();
 
                 foreach (var post in posts)
                 {
-                    query = $"SELECT * FROM {Database.PostElement} WHERE [PostId] = {post.Id}";
-
-                    post.Elements = await dbConnection.QueryAsync<PostElement>(query);
+                    post.Elements = postsElements.Where(pe => pe.PostId == post.Id).ToList();
                 }
 
                 return posts;
