@@ -26,7 +26,6 @@ namespace BlogApi.Services
             this.validationService = validationService;
         }
 
-        //todo optimalization and delete sql injection
         public async Task<Post> CreatePost(Post post)
         {
             validationService.ValidatePostContentIsNotEmpty(post);
@@ -35,12 +34,13 @@ namespace BlogApi.Services
             {
                 var insert = $"INSERT INTO {Database.Post} ([Title], [UserId], [Created]) VALUES (@Title, @UserId, @Created)";
 
-                await dbConnection.ExecuteAsync(insert, new
-                {
-                    Title = post.Title,
-                    UserId = post.UserId,
-                    Created = DateTime.UtcNow.ToTimestamp()
-                });
+                var postParameters = new DynamicParameters();
+
+                postParameters.Add("@Title", post.Title);
+                postParameters.Add("@UserId", post.UserId);
+                postParameters.Add("@Created", DateTime.UtcNow.ToTimestamp());
+
+                await dbConnection.ExecuteAsync(insert, postParameters);
 
                 var query = $"SELECT TOP(1) [Id] FROM {Database.Post} ORDER BY [Id] DESC";
                 var postId = await dbConnection.QueryAsync<int>(query);
@@ -49,13 +49,14 @@ namespace BlogApi.Services
 
                 foreach (var item in post.Elements)
                 {
-                    await dbConnection.ExecuteAsync(insert, new
-                    {
-                        Type = item.Type,
-                        Number = item.Number,
-                        Content = item.Content,
-                        PostId = postId
-                    });
+                    var postElementParameters = new DynamicParameters();
+
+                    postElementParameters.Add("@Type", item.Type);
+                    postElementParameters.Add("@Number", item.Number);
+                    postElementParameters.Add("@Content", item.Content);
+                    postElementParameters.Add("@PostId", postId);
+
+                    await dbConnection.ExecuteAsync(insert, postElementParameters);
                 }
             }
 
@@ -72,11 +73,10 @@ namespace BlogApi.Services
 
                 parameters.Add("@Id", id);
 
-                await dbConnection.ExecuteAsync("[dbo].[DeletePost]", parameters, commandType: CommandType.StoredProcedure);
+                await dbConnection.ExecuteAsync(Database.DeletePostProcedure, parameters, commandType: CommandType.StoredProcedure);
             }
         }
 
-        //todo optimalization and delete sql injection
         public async Task<Post> EditPost(Post post)
         {
             validationService.ValidatePostContentIsNotEmpty(post);
@@ -84,23 +84,35 @@ namespace BlogApi.Services
 
             using (var dbConnection = new SqlConnection(configuration[Database.ConnectionStringPath]))
             {
-                var set = $"UPDATE {Database.Post} SET [Title] = @Title WHERE [Id] = {post.Id}";
+                var postParameters = new DynamicParameters();
 
-                await dbConnection.ExecuteAsync(set, new
-                {
-                    Title = post.Title
-                });
+                postParameters.Add("@Id", post.Id);
+                postParameters.Add("@Title", post.Title);
+
+                var update = $"UPDATE {Database.Post} SET [Title] = @Title WHERE [Id] = @Id";
+
+                await dbConnection.ExecuteAsync(update, postParameters);
+
+                var postElementsDeleteParameters = new DynamicParameters();
+
+                postElementsDeleteParameters.Add("@Id", post.Id);
+
+                update = $"DELETE FROM {Database.PostElement} [PostId] = @Id";
+
+                await dbConnection.ExecuteAsync(update, postElementsDeleteParameters);
 
                 foreach (var item in post.Elements)
                 {
-                    set = $"UPDATE {Database.PostElement} SET [Type] = @Type, [Number] = @Number, [Content] = @Content  WHERE [Id] = {item.Id}";
+                    var postElementParameters = new DynamicParameters();
 
-                    await dbConnection.ExecuteAsync(set, new
-                    {
-                        Type = item.Type,
-                        Number = item.Number,
-                        Content = item.Content
-                    });
+                    postElementParameters.Add("@Type", item.Type);
+                    postElementParameters.Add("@Number", item.Number);
+                    postElementParameters.Add("@Content", item.Content);
+                    postElementParameters.Add("@PostId", post.Id);
+
+                    update = $"INSERT INTO {Database.PostElement} ([Type], [Number], [Content], [PostId]) VALUES (@Type, @Number, @Content, @PostId)";
+
+                    await dbConnection.ExecuteAsync(update,postElementParameters);
                 }
             }
 
