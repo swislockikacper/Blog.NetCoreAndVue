@@ -58,3 +58,4 @@ AS
         DELETE FROM [dbo].[Post] WHERE [Id] = @Id
     END
 GO
+

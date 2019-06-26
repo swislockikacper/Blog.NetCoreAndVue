@@ -27,17 +27,21 @@ namespace BlogApi.Services
             blobContainer = blobClient.GetContainerReference(Storage.Container);
         }
 
-        public async Task UploadFile(int blogId, IFormFile file)
+        public async Task<string> UploadFile(int blogId, IFormFile file)
         {
             if (file == null)
                 throw new ArgumentNullException("File cannot be null");
-            
+
+            var blobPath = $"{blogId}/{file.FileName}";
+
             using (var memoryStream = new MemoryStream())
             {
                 file.CopyTo(memoryStream);
 
-                await UploadToBlob(file.FileName, memoryStream.ToArray());
+                await UploadToBlob(blobPath, memoryStream.ToArray());
             }
+
+            return blobPath;
         }
 
         private async Task UploadToBlob(string fileName, byte[] file)
@@ -46,7 +50,7 @@ namespace BlogApi.Services
             {
                 PublicAccess = BlobContainerPublicAccessType.Blob
             });
-
+            
             CloudBlockBlob cloudBlockBlob = blobContainer.GetBlockBlobReference(fileName);
 
             if (file != null)

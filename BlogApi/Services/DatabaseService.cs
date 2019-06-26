@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BlogApi.Constants;
 using BlogApi.DTOs;
+using BlogApi.Enums;
 using BlogApi.Extensions;
 using BlogApi.Interfaces;
 using Dapper;
@@ -16,13 +17,13 @@ namespace BlogApi.Services
     public class DatabaseService : IDatabaseService
     {
         private readonly IConfiguration configuration;
-       // private readonly IStorageService storageService;
+        private readonly IStorageService storageService;
         private readonly IValidationService validationService;
 
-        public DatabaseService(IConfiguration configuration,/* IStorageService storageService,*/ IValidationService validationService)
+        public DatabaseService(IConfiguration configuration, IStorageService storageService, IValidationService validationService)
         {
             this.configuration = configuration;
-            //this.storageService = storageService;
+            this.storageService = storageService;
             this.validationService = validationService;
         }
 
@@ -49,16 +50,19 @@ namespace BlogApi.Services
 
                 post.Id = postId.FirstOrDefault();
 
-                foreach (var item in post.Elements)
+                foreach (var element in post.Elements)
                 {
-                    item.PostId = post.Id;
+                    if(element.Type == PostItemType.Photo)
+                        element.Content = await storageService.UploadFile(post.Id, element.File);
+
+                    element.PostId = post.Id;
 
                     var postElementParameters = new DynamicParameters();
 
-                    postElementParameters.Add("@Type", item.Type);
-                    postElementParameters.Add("@Number", item.Number);
-                    postElementParameters.Add("@Content", item.Content);
-                    postElementParameters.Add("@PostId", item.PostId);
+                    postElementParameters.Add("@Type", element.Type);
+                    postElementParameters.Add("@Number", element.Number);
+                    postElementParameters.Add("@Content", element.Content);
+                    postElementParameters.Add("@PostId", element.PostId);
 
                     await dbConnection.ExecuteAsync(insert, postElementParameters);
                 }
@@ -105,16 +109,19 @@ namespace BlogApi.Services
 
                 await dbConnection.ExecuteAsync(update, postElementsDeleteParameters);
 
-                foreach (var item in post.Elements)
+                foreach (var element in post.Elements)
                 {
-                    item.PostId = post.Id;
+                    if (element.Type == PostItemType.Photo)
+                        element.Content = await storageService.UploadFile(post.Id, element.File);
+
+                    element.PostId = post.Id;
 
                     var postElementParameters = new DynamicParameters();
 
-                    postElementParameters.Add("@Type", item.Type);
-                    postElementParameters.Add("@Number", item.Number);
-                    postElementParameters.Add("@Content", item.Content);
-                    postElementParameters.Add("@PostId", item.PostId);
+                    postElementParameters.Add("@Type", element.Type);
+                    postElementParameters.Add("@Number", element.Number);
+                    postElementParameters.Add("@Content", element.Content);
+                    postElementParameters.Add("@PostId", element.PostId);
 
                     update = $"INSERT INTO {Database.PostElement} ([Type], [Number], [Content], [PostId]) VALUES (@Type, @Number, @Content, @PostId)";
 

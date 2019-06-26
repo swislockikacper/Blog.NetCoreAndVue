@@ -31,8 +31,7 @@ namespace BlogApi.Controllers
 
 
         [HttpDelete]
-        //[Authorize]
-        [AllowAnonymous]
+        [Authorize]
         [Route("api/Posts/{id}")]
         public async Task<ActionResult> Delete([FromRoute] int id)
         {
@@ -41,17 +40,17 @@ namespace BlogApi.Controllers
         }
 
         [HttpPost]
-        //[Authorize]
-        [AllowAnonymous]
+        [Authorize]
         [Route("api/Posts")]
-        public async Task<ActionResult<Post>> Create([FromBody] Post post)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<Post>> Create([FromForm] Post post)
             => Ok(await dbService.CreatePost(post));
 
         [HttpPut]
-        //[Authorize]
-        [AllowAnonymous]
+        [Authorize]
         [Route("api/Posts")]
-        public async Task<ActionResult<Post>> Edit([FromBody] Post post)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<Post>> Edit([FromForm] Post post)
             => Ok(await dbService.EditPost(post));
     }
 }

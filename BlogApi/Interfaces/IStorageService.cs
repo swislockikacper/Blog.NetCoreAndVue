@@ -5,6 +5,6 @@ namespace BlogApi.Interfaces
 {
     public interface IStorageService
     {
-        Task UploadFile(int blogId, IFormFile file);
+        Task<string> UploadFile(int blogId, IFormFile file);
     }
 }
